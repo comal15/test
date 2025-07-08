@@ -1,0 +1,38 @@
+---
+- name: Allow Telnet (port 23) on LAN interface
+  hosts: pfsense
+  gather_facts: no
+  tasks:
+
+    - name: Add firewall rule to allow Telnet on LAN interface
+      raw: |
+        /usr/local/bin/pfSsh.php <<EOF
+        <?php
+        require_once("globals.inc");
+        require_once("guiconfig.inc");
+        require_once("filter.inc");
+
+        $a_filter = &$config['filter']['rule'];
+
+        $rule = array();
+        $rule['type'] = 'pass';
+        $rule['interface'] = 'lan';
+        $rule['ipprotocol'] = 'inet';
+        $rule['protocol'] = 'tcp';
+        $rule['source']['any'] = true;
+        $rule['destination']['port'] = '23';
+        $rule['destination']['any'] = true;
+        $rule['descr'] = 'Allow Telnet on LAN';
+        $rule['disabled'] = false;
+
+        $a_filter[] = $rule;
+        write_config();
+        filter_configure();
+        ?>
+        EOF
+
+    - name: Confirm the firewall rule was applied
+      raw: "pfctl -sr | grep 23 || echo 'Port 23 rule not found'"
+
+    - name: Check if something is listening on port 23
+      raw: "netstat -an | grep LISTEN | grep '.23' || echo 'Nothing is listening on port 23'"
