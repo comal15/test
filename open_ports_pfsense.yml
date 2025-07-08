@@ -1,0 +1,19 @@
+---
+- name: Open ports 21, 23, 111 on pfSense
+  hosts: pfsense
+  gather_facts: no
+  become: yes
+
+  vars:
+    interface: em1  # Change to your LAN or WAN interface
+
+  tasks:
+    - name: Create pf rule file to open specific ports
+      ansible.builtin.copy:
+        dest: /tmp/open_ports.rules
+        content: |
+          # Allow FTP (port 21)
+          pass in on {{ interface }} proto tcp from any to any port 21 keep state
+
+          # Allow Telnet (port 23)
+          pass in on {{ interface }} proto tcp from any to any port 23 keep s
